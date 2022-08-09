@@ -64,7 +64,9 @@ Using the Sakila database, investigate customers:
 SELECT customer_id, count(rental_id) as rentals
 FROM rental
 GROUP BY 1;
+```
 This will show customers and their corresponding rentals; however, it would be helpful for an additional aggregation in order to further explore this data by nesting the above query and executing an additional query:
+``` sql
 SELECT rentals, count(*) as num_customers
 FROM (
 	SELECT customer_id, count(rental_id) as rentals
@@ -72,7 +74,10 @@ FROM (
 	GROUP BY 1
     ) a
 GROUP BY 1;
+```
+
 This data shows how many customers as a function of total rental count. This data would be ideal for a histogram. In the absence of visualization tools, SQL can create a crude histogram for quick visuals: 
+``` sql
 SELECT rentals, count(*) as num_customers,
 -- RPAD(String, length, rpad_string)
 RPAD('', COUNT(*), '*') AS bar
@@ -94,7 +99,9 @@ SELECT customer_id, SUM(amount) as total
 FROM payment
 GROUP BY customer_id
 ORDER BY total DESC;
+```
 In order to put the data into larger bins, modify the query accordingly: 
+``` sql
 SELECT 
 CASE WHEN total <= 75 THEN 'up to 75'
 	 WHEN total <= 100 THEN '75 to 100'
@@ -117,12 +124,16 @@ Data integrity is a huge issue and detecting duplicates can take us a long way i
 SELECT rental_id, rental_date, return_date
 FROM rental
 ORDER BY 1,2,3;
+```
 A better approach would be to group and order the data so duplicates are identified at the top of the list:
+``` sql
 SELECT customer_id, first_name, last_name, count(*) as records
 FROM customer
 GROUP BY 1,2,3
 ORDER BY records DESC
+```
 To build upon this, add an aggregation and filter out records with count > 1:
+``` sql
 SELECT records, count(*)
 FROM
 (
@@ -158,7 +169,9 @@ Further, when deciding what ‘NULL’ is. In this case, where language id is nu
 SELECT title, rating, original_language_id, 
 COALESCE(original_language_id, 'unknown') AS OriginalLanguage
 FROM film
+``` 
 In the event certain columns have data that needs to be changed. For example, consider the values in rental_rate. Some have $ and others do not. Using ‘replace’ supports 
+``` sql
 SELECT *, 
 	replace(rental_rate, '$', '') AS clean
 FROM film
