@@ -8,38 +8,57 @@ This respository will highlight tools for conducting Exploratory Data Analysis (
 In this exercise, we will use a modified version of the [Sample Sakila Database](https://dev.mysql.com/doc/sakila/en/). The modified version will be referred to as the Bad Sakila Database. The modified database has been extended and had restraints removed to allow the addition of bad data. The goal of this exercise is to investigate the data and identify problematic data. 
 
 For context, the Sakila database captures data related to movie rentals. The database schema is noted as follows:
+![Sakila Schema](Database_Schema.png)
 
 Within the local instance of MySQL create the following schemas: 
 - [Bad Sakila](bad-sakila-schema)
 - [Sakila](sakila-schema.sql)
 
+With the schema's defined, load the data: 
+- [Bad Sakila Data](bad-sakila-data.sql)
+- [Sakila Data](sakila-data.sql)
+
 # Investigate Database
 Initially, will need to get a feel for the database. A good command to start with would be:
-<p>`SHOW TABLE STATUS` </p>
+
+``` sql
+SHOW TABLE STATUS 
+```
 This highlights how many tables, along with a few descriptors, including how many rows per table, format, row length, etc. 
 
 Next, investigate content of tables. In this case, let’s look at how many films are in this database? By using this query: 
-<p>`SELECT count(*) from film;`</p>
+``` sql
+SELECT count(*) from film;
+```
 It is clear that there are 1000 films. 
 For a more complete picture, let’s investigate how many films are available in each category. This will require data from multiple tables (film_category, film, and category) and, as result, a join for each of those tables:
-<p>`SELECT count(*), t3.name 
+
+
+``` sql
+SELECT count(*), t3.name 
 from film t1
 JOIN film_category t2
 	ON t1.film_id = t2.film_id
 JOIN category t3
 	ON t3.category_id = t2.category_id
-GROUP BY t3.name;`</p>
+GROUP BY t3.name;`
+```
+
 
 Further, how many active customers are noted in this database? 
-<p>`SELECT active, count(customer_id) as customers
+``` sql
+SELECT active, count(customer_id) as customers
 FROM customer
-GROUP BY 1;`</p>
+GROUP BY 1;
+```
 
 
 
 # Grouping Data and Creating Histograms
 
-Using the sakila database (see corresponding .sql files), investigate customers: 
+Using the Sakila database, investigate customers: 
+
+``` sql
 SELECT customer_id, count(rental_id) as rentals
 FROM rental
 GROUP BY 1;
@@ -61,12 +80,13 @@ FROM (
 	GROUP BY 1
     ) a
 GROUP BY 1;
-
+```
 
 
 # Grouping Data in Bins
 
 How much were customers spending and what groups did the spending land in? Binning the data would be a great tool to identify this solution: 
+``` sql
 SELECT customer_id, SUM(amount) as total
 FROM payment
 GROUP BY customer_id
@@ -86,9 +106,11 @@ FROM
 	GROUP BY customer_id
 	ORDER BY total DESC) a
 GROUP BY 1;
+```
 
 # Detecting Duplicates
 Data integrity is a huge issue and detecting duplicates can take us a long way in learning how solid the data is. Further, visual inspection is key in rapid identification of duplicate data. A time consuming and unreliable method would be to list out the data and investigate. In this case, listing out the rental data: 
+``` sql
 SELECT rental_id, rental_date, return_date
 FROM rental
 ORDER BY 1,2,3;
@@ -107,12 +129,16 @@ FROM
 	ORDER BY records DESC) a
 WHERE records > 1
 GROUP BY 1;
+```
 
 # Data Cleaning
-Data cleaning is a primary focus in data analysis. In order to investigate data integrity of this data set (and others), consider the ‘gender’ data in the customer field:
+Data cleaning is a primary focus in data analysis. There are a number of methods for evaluating and cleaning data. In order to investigate data integrity of this data set (and others), consider the ‘gender’ data in the customer field:
+``` sql
 SELECT gender
 FROM customer;
+```
 There are a variety of ways to identify gender (e.g. F, femail, FEMAIL, etc). In this case, what is the best way to transform this data and make it ‘clean?’ Use a case transformation: 
+``` sql
 SELECT *, 
 CASE
 	WHEN gender = 'FEMALE' THEN 'female'
@@ -121,17 +147,20 @@ CASE
     ELSE gender
     END AS gender_cleaned
 FROM customer
+```
 This will create a new column, gender_cleaned, to identify a uniform listing of gender identifiers.
 
 Further, when deciding what ‘NULL’ is. In this case, where language id is null, we could add ‘unknown’ to add data. The COALESCE operator does this nicely:
-SELECT title, rating, original_language_id, 
+``` sql SELECT title, rating, original_language_id, 
 COALESCE(original_language_id, 'unknown') AS OriginalLanguage
 FROM film
 In the event certain columns have data that needs to be changed. For example, consider the values in rental_rate. Some have $ and others do not. Using ‘replace’ supports 
 SELECT *, 
 	replace(rental_rate, '$', '') AS clean
 FROM film
+```
 In the event of investigating count of transactions as a function of birthdate decade: 
+``` sql 
 SELECT
 	count(*) AS count, 
     FLOOR(YEAR(birthdate)/10)*10 AS decade
@@ -139,7 +168,9 @@ FROM
 	customer
 GROUP BY
 	decade
+```
 In order to confirm this is real, putting the ‘birthdate’ next to the ‘decade’ column will offer a crude visual:
+``` sql 
 SELECT
     FLOOR(YEAR(birthdate)/10)*10 AS decade, 
     birthdate
@@ -147,12 +178,13 @@ FROM
 	customer
 GROUP BY
 	decade, birthdate
-
+```
 See more here
 
 
 # Pivot Tables
 Pivots create summaries of data from a table so the data can be viewed from different perspectives. For example, the following query will capture the sum of all payments as a function of payment date: 
+``` sql
 SELECT 
 	MONTH(payment_date) AS month,
     SUM(amount)
@@ -162,10 +194,13 @@ WHERE
 	YEAR(payment_date) = 2005
 GROUP BY 
 	Month
+```
 
 # Functions to Handle Date and Time
 Various time formats lead to confusion (e.g. daylight savings, UTC, GMT, server time, irregular timezone boundaries, etc). A database environment allows investigation of server time:
-<p>`SELECT @@global.time_zone, @@session.time_zone;`</p>
+``` sql
+SELECT @@global.time_zone, @@session.time_zone;
+```
 This command, when executed in MySQL, indicates its a system time, meaning it’s using the time from the machine. To confirm what time the machine has, use the `date` command within terminal. See [date_time.sql](date_time.sql) file for a series of commands that can be used to work with time and even parse features of time / date. 
 
 
