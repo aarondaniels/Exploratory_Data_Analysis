@@ -1,13 +1,13 @@
-# Exploratory_Data_Analysis
+# Exploratory Data Analysis
 
-# Background
+## Background
 This respository will highlight tools for conducting Exploratory Data Analysis (EDA). This instruction will also include establishing a database and populating data to begin conducting EDA. 
 
-# Initialize Database
+## Initialize Database
 
 In this exercise, we will use a modified version of the [Sample Sakila Database](https://dev.mysql.com/doc/sakila/en/). The modified version will be referred to as the Bad Sakila Database. The modified database has been extended and had restraints removed to allow the addition of bad data. The goal of this exercise is to investigate the data and identify problematic data. 
 
-For context, the Sakila database captures data related to movie rentals. The database schema is noted as follows:
+For context, the Sakila database captures data related to movie rentals. The relational database schema is noted as follows:
 ![Sakila Schema](Database_Schema.png)
 
 Within the local instance of MySQL create the following schemas: 
@@ -18,12 +18,14 @@ With the schema's defined, load the data:
 - [Bad Sakila Data](bad-sakila-data.sql)
 - [Sakila Data](sakila-data.sql)
 
-# Investigate Database
+## Investigate Database
 Initially, will need to get a feel for the database. A good command to start with would be:
 
 ``` sql
 SHOW TABLE STATUS 
 ```
+![Show Table Status](SHOW_TABLE_STATUS.png)
+
 This highlights how many tables, along with a few descriptors, including how many rows per table, format, row length, etc. 
 
 Next, investigate content of tables. In this case, let’s look at how many films are in this database? By using this query: 
@@ -54,7 +56,7 @@ GROUP BY 1;
 
 
 
-# Grouping Data and Creating Histograms
+## Grouping Data and Creating Histograms
 
 Using the Sakila database, investigate customers: 
 
@@ -81,9 +83,10 @@ FROM (
     ) a
 GROUP BY 1;
 ```
+The RPAD functionn will yield the following visual:
+![SQL Histogram](SQL_Histogram.png)
 
-
-# Grouping Data in Bins
+## Grouping Data in Bins
 
 How much were customers spending and what groups did the spending land in? Binning the data would be a great tool to identify this solution: 
 ``` sql
@@ -108,7 +111,7 @@ FROM
 GROUP BY 1;
 ```
 
-# Detecting Duplicates
+## Detecting Duplicates
 Data integrity is a huge issue and detecting duplicates can take us a long way in learning how solid the data is. Further, visual inspection is key in rapid identification of duplicate data. A time consuming and unreliable method would be to list out the data and investigate. In this case, listing out the rental data: 
 ``` sql
 SELECT rental_id, rental_date, return_date
@@ -131,7 +134,7 @@ WHERE records > 1
 GROUP BY 1;
 ```
 
-# Data Cleaning
+## Data Cleaning
 Data cleaning is a primary focus in data analysis. There are a number of methods for evaluating and cleaning data. In order to investigate data integrity of this data set (and others), consider the ‘gender’ data in the customer field:
 ``` sql
 SELECT gender
@@ -151,7 +154,8 @@ FROM customer
 This will create a new column, gender_cleaned, to identify a uniform listing of gender identifiers.
 
 Further, when deciding what ‘NULL’ is. In this case, where language id is null, we could add ‘unknown’ to add data. The COALESCE operator does this nicely:
-``` sql SELECT title, rating, original_language_id, 
+``` sql 
+SELECT title, rating, original_language_id, 
 COALESCE(original_language_id, 'unknown') AS OriginalLanguage
 FROM film
 In the event certain columns have data that needs to be changed. For example, consider the values in rental_rate. Some have $ and others do not. Using ‘replace’ supports 
@@ -179,10 +183,10 @@ FROM
 GROUP BY
 	decade, birthdate
 ```
-See more here
+For more on data cleaning, see [this doc](data_cleaning.md). 
 
 
-# Pivot Tables
+## Pivot Tables
 Pivots create summaries of data from a table so the data can be viewed from different perspectives. For example, the following query will capture the sum of all payments as a function of payment date: 
 ``` sql
 SELECT 
@@ -196,7 +200,7 @@ GROUP BY
 	Month
 ```
 
-# Functions to Handle Date and Time
+## Functions to Handle Date and Time
 Various time formats lead to confusion (e.g. daylight savings, UTC, GMT, server time, irregular timezone boundaries, etc). A database environment allows investigation of server time:
 ``` sql
 SELECT @@global.time_zone, @@session.time_zone;
